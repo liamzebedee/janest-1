@@ -13,22 +13,7 @@ print(model)
 return
 
 
-# Print for each layer, every number of outputs
 
-def print_arch(model):
-    import sys
-
-    with torch.no_grad():
-        for name, param in model.named_parameters():
-            print(f"{name}: {param.dtype}")
-        output = model(text)
-        return float(output)
-
-    for i, layer in enumerate(model):
-        if hasattr(layer, "in_features"):
-            sys.stdout.write(f"{layer.in_features},{layer.out_features},")
-    
-    sys.exit(0)
 
 # print_arch(model)
 

@@ -1,6 +1,8 @@
 # By scanning the sequence of output dimensions, the overall structure appears to be:
 # IB -> [A -> B -> C] * 7 -> [A' -> B -> C] * 5 -> [A'' -> B -> C] * 5 -> FB
 
+# 18 + ((19 + 14 + 12) * 7) + ((19 + 14 + 12) * 5) + ((19 + 14 + 12) * 5) + 60
+
 # In summary, the architecture starts with a unique block (IB), then enters a highly repetitive phase consisting of 17 repetitions of a three-block motif (A variant -> B -> C), and finally concludes with another unique block (FB) that reduces the dimension down to 1. There are 7 fundamental sequential patterns observed, with blocks B and C being the most frequently repeated individual sequences.
 
 import torch
@@ -40,27 +42,27 @@ def _create_block(block_dims: List[int]) -> nn.Sequential:
 # Note: These dimensions need to be extracted precisely from the full sequence.
 # The example dimensions below are based on the previous analysis.
 
-# IB: Input 55, Output 224 (17 layers within block)
-ib_dims = [55, 224, 232, 64, 208, 200, 212, 204, 216, 208, 220, 212, 224, 216, 228, 220, 232, 224]
+#IB:Input55,Output224(17layerswithinblock)
+ib_dims=[55,224,232,64,208,200,212,204,216,208,220,212,224,216,228,220,232,224]
 
-# A: Input 224, Output 256 (18 layers within block)
-a_dims = [224, 336, 296, 340, 332, 375, 399, 410, 402, 412, 404, 412, 404, 408, 400, 352, 288, 288, 256]
+#A:Input224,Output256(18layerswithinblock)
+a_dims=[224,336,296,340,332,375,399,410,402,412,404,412,404,408,400,352,288,288,256]
 
-# B: Input 256, Output 256 (13 layers within block)
-b_dims = [256, 319, 288, 318, 288, 316, 288, 312, 288, 304, 288, 256, 288, 256]
+#B:Input256,Output256(13layerswithinblock)
+b_dims=[256,319,288,318,288,316,288,312,288,304,288,256,288,256]
 
-# C: Input 256, Output 256 (11 layers within block)
-c_dims = [256, 319, 288, 318, 288, 316, 288, 312, 288, 304, 288, 256]
+#C:Input256,Output256(11layerswithinblock)
+c_dims=[256,319,288,318,288,316,288,312,288,304,288,256]
 
-# A': Input 256, Output 256 (18 layers within block)
-a_prime_dims = [256, 368, 328, 340, 332, 375, 399, 410, 402, 412, 404, 412, 404, 408, 400, 352, 288, 288, 256]
+#A':Input256,Output256(18layerswithinblock)
+a_prime_dims=[256,368,328,340,332,375,399,410,402,412,404,412,404,408,400,352,288,288,256]
 
-# A'': Input 256, Output 256 (18 layers within block)
-a_prime_prime_dims = [256, 336, 328, 340, 332, 375, 399, 410, 402, 412, 404, 412, 404, 408, 400, 352, 288, 288, 256]
+#A'':Input256,Output256(18layerswithinblock)
+a_prime_prime_dims=[256,336,328,340,332,375,399,410,402,412,404,412,404,408,400,352,288,288,256]
 
-# FB: Input 256, Output 48 (58 layers within block) - Sequence needs careful extraction
-# Example start/end based on analysis - actual list would be ~59 elements long
-fb_dims = [256, 256, 256, 256, 256, 287, 319, 318, 318, 316, 316, 312, 312, 304, 304, 256, 192, 192, 160, 223, 192, 222, 192, 220, 192, 216, 192, 208, 192, 160, 160, 192, 160, 223, 192, 222, 192, 220, 192, 216, 192, 208, 192, 160, 160, 320, 320, 382, 446, 444, 444, 440, 440, 432, 432, 416, 416, 320, 192, 48]
+#FB:Input256,Output48(58layerswithinblock)-Sequenceneedscarefulextraction
+#Examplestart/endbasedonanalysis-actuallistwouldbe~59elementslong
+fb_dims=[256,256,256,256,256,287,319,318,318,316,316,312,312,304,304,256,192,192,160,223,192,222,192,220,192,216,192,208,192,160,160,192,160,223,192,222,192,220,192,216,192,208,192,160,160,320,320,382,446,444,444,440,440,432,432,416,416,320,192,48]
 
 
 # --- Main Network Definition ---
