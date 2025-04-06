@@ -1138,6 +1138,27 @@ def l4_g(x: np.ndarray) -> np.ndarray:
 
     return out
 
+# Generated from reverse engineering
+def l4_g(x: np.ndarray) -> np.ndarray:
+    # x is a list (or vector) of length 64
+    out = np.empty(64, dtype=np.float32)
+
+    biases = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    for i in range(0, 56):
+        s = x[0 + i] + 1*(x[i + 56] << 7) + -1*(x[i + 112] << 8) + 1*(x[i + 168] << 7)
+        s += biases[i]
+        out[0 + i] = s if s > 0 else 0.0 # ReLu
+
+    biases = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    for i in range(0, 8):
+        s = x[224 + i]
+        s += biases[i]
+        out[56 + i] = s if s > 0 else 0.0 # ReLu
+
+    return out
+
+
+
 print(convert_vec_to_bin(l4_(x)))
 print(convert_vec_to_bin(human_l4(x)))
 print(convert_vec_to_bin(l4_g(x)))

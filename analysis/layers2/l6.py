@@ -834,3 +834,48 @@ def l6_(x):
         l6_206(x),
         l6_207(x),
     ]
+# Generated from reverse engineering
+def l6_g(x: np.ndarray) -> np.ndarray:
+    # x is a list (or vector) of length 208
+    out = np.empty(208, dtype=np.float32)
+    
+    # biases: 0x80c4a2e691d5b3f77f3b5d196e2a4c08 (len=128)
+    biases = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+    # for i in range(0, 128):
+    for i in range(0, 128):
+        s = 0
+        s += biases[i]
+        out[0 + i] = s if s > 0 else 0.0 # ReLu
+        
+    biases = [128.0, 128.0, 128.0, 128.0]
+    # for i in range(128, 132):
+    for i in range(0, 4):
+        s = -1 * x[0 + i]
+        s += biases[i]
+        out[128 + i] = s if s > 0 else 0.0 # ReLu
+        
+    # for i in range(132, 136):
+    for i in range(0, 4):
+        s = x[0 + i]
+        out[132 + i] = s if s > 0 else 0.0 # ReLu
+        
+    biases = [-127.0, -127.0, -127.0, -127.0]
+    # for i in range(136, 140):
+    for i in range(0, 4):
+        s = x[0 + i]
+        s += biases[i]
+        out[136 + i] = s if s > 0 else 0.0 # ReLu
+        
+    biases = [-128.0, -128.0, -128.0, -128.0]
+    # for i in range(140, 144):
+    for i in range(0, 4):
+        s = x[0 + i]
+        s += biases[i]
+        out[140 + i] = s if s > 0 else 0.0 # ReLu
+        
+    # for i in range(144, 208):
+    for i in range(0, 64):
+        s = x[0 + i]
+        out[144 + i] = s if s > 0 else 0.0 # ReLu
+        
+    return out

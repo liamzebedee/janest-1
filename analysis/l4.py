@@ -259,11 +259,13 @@ def l4(x):
         l4_63(x),
     ]
 
+
+import numpy as np
+
 # Test the function
 # Generate a random 232-bit input
 import random
 x = [random.randint(0, 1) for _ in range(232)]
-y = l4(x)
 
 
 def convert_vec_to_bin(y):
@@ -278,7 +280,6 @@ def convert_vec_to_bin(y):
     y_hex = hex(y_int)
     return y_hex
 
-import numpy as np
 
 def human_l4(x: np.ndarray) -> np.ndarray:
     """
@@ -311,46 +312,42 @@ def human_l4(x: np.ndarray) -> np.ndarray:
     return out
 
 
-
-def human_l4_2(x: np.ndarray) -> np.ndarray:
-    """
-    Implements the bitwise logic equivalent of layer 4.
-    Input:
-      x - a numpy array of shape (232,) with dtype=np.float32.
-    Output:
-      A numpy array of shape (64,) representing the layer output.
-    
-    For i = 0 to 55:
-      output[i] = max(0, 1*x[i] + 128*x[i+56] - 256*x[i+112] + 128*x[i+168])
-    For i = 56 to 63:
-      output[i] = max(0, 1*x[i+168])
-    """
-    out = np.empty(64, dtype=np.float32)
-    
-    # First 56 outputs
-    for i in range(56):
-        s = x[i] + x[i + 56] << 7 + x[i + 112] >> 8 + x[i + 168] << 7
-        out[i] = s if s > 0 else 0.0  # ReLU
-    
-    # Last 8 outputs
-    for i in range(56, 64):
-        s = x[i + 168]  # For i=56, x[224] ... for i=63, x[231]
-        out[i] = s if s > 0 else 0.0  # ReLU
-    
-    return out
-
-def l4_g(x):
+# Generated from reverse engineering
+def l4_g(x: np.ndarray) -> np.ndarray:
     # x is a list (or vector) of length 64
     out = np.empty(64, dtype=np.float32)
 
     for i in range(0, 56):
-        s = x[i + 0] + x[i] << 7 + x[i] >> 8 + x[i] << 7
-        out[i] = max(0, s)
+        s = x[i + 0] + +1*(x[i + 56] << 7) + -1*(x[i + 112] << 8) + +1*(x[i + 168] << 7)
+        out[i] = s if s > 0 else 0.0 # ReLu
 
     for i in range(56, 64):
-        s = x[i + 224]
-        out[i] = max(0, s)
+        s = x[i + 168]
+        out[i] = s if s > 0 else 0.0 # ReLu
 
-print(convert_vec_to_bin(y))
+    return out
+
+# Generated from reverse engineering
+def l4_g(x: np.ndarray) -> np.ndarray:
+    # x is a list (or vector) of length 64
+    out = np.empty(64, dtype=np.float32)
+
+    biases = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    for i in range(0, 56):
+        s = x[0 + i] + 1*(x[i + 56] << 7) + -1*(x[i + 112] << 8) + 1*(x[i + 168] << 7)
+        s += biases[i]
+        out[0 + i] = s if s > 0 else 0.0 # ReLu
+
+    biases = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    for i in range(0, 8):
+        s = x[224 + i]
+        s += biases[i]
+        out[56 + i] = s if s > 0 else 0.0 # ReLu
+
+    return out
+
+
+
+print(convert_vec_to_bin(l4_(x)))
 print(convert_vec_to_bin(human_l4(x)))
 print(convert_vec_to_bin(l4_g(x)))

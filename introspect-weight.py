@@ -203,8 +203,8 @@ model = torch.load("js.pt", weights_only=False, map_location='cpu')
 
 # We are going to do this.
 # output to analysis/layers/l[index].py each layer.
-i = 4
-j = 49
+i = 6
+j = 22
 layer = model[i]
 
 if isinstance(layer, nn.ReLU):
