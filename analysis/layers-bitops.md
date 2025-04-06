@@ -1,3 +1,5 @@
+# analysis.
+
 ## Bitwise masking.
 
 say you see this as a cutout of an architecutre. what do you suppose this does, if you express it in bitwise logic?

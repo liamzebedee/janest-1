@@ -310,5 +310,47 @@ def human_l4(x: np.ndarray) -> np.ndarray:
     
     return out
 
+
+
+def human_l4_2(x: np.ndarray) -> np.ndarray:
+    """
+    Implements the bitwise logic equivalent of layer 4.
+    Input:
+      x - a numpy array of shape (232,) with dtype=np.float32.
+    Output:
+      A numpy array of shape (64,) representing the layer output.
+    
+    For i = 0 to 55:
+      output[i] = max(0, 1*x[i] + 128*x[i+56] - 256*x[i+112] + 128*x[i+168])
+    For i = 56 to 63:
+      output[i] = max(0, 1*x[i+168])
+    """
+    out = np.empty(64, dtype=np.float32)
+    
+    # First 56 outputs
+    for i in range(56):
+        s = x[i] + x[i + 56] << 7 + x[i + 112] >> 8 + x[i + 168] << 7
+        out[i] = s if s > 0 else 0.0  # ReLU
+    
+    # Last 8 outputs
+    for i in range(56, 64):
+        s = x[i + 168]  # For i=56, x[224] ... for i=63, x[231]
+        out[i] = s if s > 0 else 0.0  # ReLU
+    
+    return out
+
+def l4_g(x):
+    # x is a list (or vector) of length 64
+    out = np.empty(64, dtype=np.float32)
+
+    for i in range(0, 56):
+        s = x[i + 0] + x[i] << 7 + x[i] >> 8 + x[i] << 7
+        out[i] = max(0, s)
+
+    for i in range(56, 64):
+        s = x[i + 224]
+        out[i] = max(0, s)
+
 print(convert_vec_to_bin(y))
 print(convert_vec_to_bin(human_l4(x)))
+print(convert_vec_to_bin(l4_g(x)))
