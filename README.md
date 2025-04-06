@@ -60,6 +60,67 @@ Sequential(
    - **Questions**: for what inputs does this model produce a non-zero output? (ie. not 0.0). 
    - The final Linear(48, 1) layer strongly indicates that the network's purpose is either binary classification (outputting a single logit) or regression (predicting a single continuous value). **However**, based on the purely linear architecture it feels more likely this is a red herring. Although - suitably deep neural networks can approximate any function.
 
+Other observations:
+
+ * Weights and biases.
+   * `activations.py` prints the weights and biases for random 4 perceptrons for all the layers.
+   * Read them in `weights-biases.txt`.
+   * **Values are all integers**: [-1, 0, 1]
+   * In terms of indices of the 1/-1, the weights are **sparse**. They are **NOT** one-hot encoded - **there is > 1 non-zero weight per perceptron**. 
+   * This definitely **implies bitwise logic** is the core of the neural network.
+ * Model architecture.
+   * Unique dimensions (n=47): `{256, 1, 399, 400, 402, 404, 408, 410, 412, 287, 288, 160, 416, 296, 304, 432, 48, 55, 312, 440, 316, 444, 318, 319, 64, 192, 320, 446, 200, 328, 204, 332, 208, 336, 212, 340, 216, 220, 222, 223, 224, 352, 228, 232, 368, 375, 382}`
+   * Layer sizes (ordered least to most frequent):
+```txt
+1: 1
+287: 1
+48: 1
+55: 1
+64: 1
+446: 1
+200: 1
+204: 1
+228: 1
+382: 1
+416: 2
+432: 2
+440: 2
+444: 2
+212: 2
+222: 2
+223: 2
+232: 2
+320: 3
+224: 3
+160: 4
+208: 4
+216: 4
+220: 4
+192: 14
+368: 16
+328: 31
+296: 32
+336: 47
+399: 63
+400: 63
+402: 63
+408: 63
+410: 63
+332: 63
+340: 63
+352: 63
+375: 63
+404: 126
+412: 126
+319: 127
+304: 128
+312: 128
+316: 128
+318: 128
+256: 257
+288: 819
+```
+
 Open research directions:
 
  1. Motifs. The network's structure (see image) is very repetitive. Ideally we can find the patterns to express it easily - though there are 5442 layers, so this is not manual labour.
@@ -71,6 +132,10 @@ Open research directions:
  2. **Reverse-engineering**. 
 
     1. Could we see what inputs activate the model uniformly? Instead of adjusting the weights, could we compute the gradient with respect to the inputs `x` and adjust it in the direction of more activation?
+
+## Scratchpad.
+
+ - training a bitshift neural net.
 
 ## Install.
 

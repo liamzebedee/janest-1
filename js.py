@@ -9,8 +9,6 @@ def predict(text, model):
 model = torch.load("js.pt", weights_only=False, map_location='cpu')
 # torch.load(model_path, weights_only=False, )
 # model.eval()
-print(model)
-return
 
 
 
@@ -93,17 +91,21 @@ def test_hash_fn(text):
         vec_in[i] = ord(c)
     vec_in = vec_in.float()
     y = model(vec_in)
+    # Sanity check: y should be a list of integers
+    for i in range(len(y)):
+        if not isinstance(y[i], int):
+            if y[i] % 1 != 0:
+                print(f"Element {i} is not an integer: {y[i]}")
     y_int = int("".join(str(int(y[i])) for i in range(len(y))))
+    y_str = "".join(chr(int(y[i])) for i in range(len(y)))
+    print(y_str)
     y_hex = hex(y_int)
     return y_hex
 
-print(test_hash_fn("hello"))
+print(test_hash_fn("a" * 55))
 print(test_hash_fn("world"))
 print(test_hash_fn("hello world"))
 print(test_hash_fn("world hello"))
-
-
-
 
 
 
