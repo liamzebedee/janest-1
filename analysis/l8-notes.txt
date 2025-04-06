@@ -1,0 +1,30 @@
+def l8_132(x):
+    # x is a list (or vector) of length 208
+    return max(0, x[132] + -128.0*x[136] + 128.0*x[140])
+def l8_133(x):
+    # x is a list (or vector) of length 208
+    return max(0, x[133] + -128.0*x[137] + 128.0*x[141])
+def l8_134(x):
+    # x is a list (or vector) of length 208
+    return max(0, x[134] + -128.0*x[138] + 128.0*x[142])
+def l8_135(x):
+    # x is a list (or vector) of length 208
+    return max(0, x[135] + -128.0*x[139] + 128.0*x[143])
+
+
+I feel like this looks like:
+
+  132:135 (4 bits)
+- 136:139 (4 bits)
++ 140:143 (4 bits)
+
+assume these are 256 (8 bytes)
+looks like -128 for 4 bits
+            128 for 4 bits
+so operating on a byte
+what this does:
+
+bitstring view:
+0000 0000 0000
+
+this operates on 12 bits

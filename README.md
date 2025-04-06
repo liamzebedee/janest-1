@@ -3,7 +3,7 @@ Dwarkesh Jane St problem
 
 Jane St problem from Dwarkesh podcast: https://x.com/dwarkesh_sp/status/1907886365565501568
 
- http://jane-st.co/dwarkesh-puzzle
+http://jane-st.co/dwarkesh-puzzle
 
 ## Problem.
 

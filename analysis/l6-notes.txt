@@ -1,0 +1,28 @@
+def l6_136(x):
+    # x is a list (or vector) of length 64
+    return max(0, x[0] + -127.0)
+def l6_137(x):
+    # x is a list (or vector) of length 64
+    return max(0, x[1] + -127.0)
+def l6_138(x):
+    # x is a list (or vector) of length 64
+    return max(0, x[2] + -127.0)
+def l6_139(x):
+    # x is a list (or vector) of length 64
+    return max(0, x[3] + -127.0)
+def l6_140(x):
+    # x is a list (or vector) of length 64
+    return max(0, x[0] + -128.0)
+def l6_141(x):
+    # x is a list (or vector) of length 64
+    return max(0, x[1] + -128.0)
+def l6_142(x):
+    # x is a list (or vector) of length 64
+    return max(0, x[2] + -128.0)
+def l6_143(x):
+    # x is a list (or vector) of length 64
+    return max(0, x[3] + -128.0)
+
+
+
+(x[0:3] << 8) - 1
