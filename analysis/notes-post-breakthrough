@@ -1,0 +1,248 @@
+I could probably do multiple approaches:
+
+
+- generate a trace of the network
+
+    for a full inference
+    dump all the weights at each step
+    see what changes? what stays static? 
+    this could probs map out the main bits
+
+- take my python decompiled, convert it to C or Go
+    brute force the key
+    even then this is still O(2^55)
+
+    do only a dictionary of alphanumerics
+    O(2^45)
+
+- chatgpt
+
+
+    BRANCHING
+    ---------
+
+
+    if (cond) y = f1(x);
+    else      y = f2(x);
+
+    y = cond * f1(x) + (1 - cond) * f2(x)
+
+    cond = 1
+    y = 1 * in[0] + 0 * in[1]
+
+
+    out[i] = !x[98 + i];
+    out[i] = !x[99 + i];
+    
+    is equaal to
+
+    # biases: 0x3 (len=2)
+    biases = [1.0, 1.0]
+    # for i in range(98, 100):
+    for i in range(0, 2):
+        s = -1 * x[98 + i]
+        s += biases[i]
+        out[98 + i] = s if s > 0 else 0.0 # ReLu
+
+
+- identify the bigger structures
+    currently each layer is grokkable as single function
+        need to fix the initial and final permutation layers
+        need to make the code even more readable
+            copy
+        
+        need to take the DES things and identify them in code
+             //Rotate left operation
+            #define ROL8(a, n) (((a) << (n)) | ((a) >> (8 - (n))))
+            #define ROL16(a, n) (((a) << (n)) | ((a) >> (16 - (n))))
+            #define ROL32(a, n) (((a) << (n)) | ((a) >> (32 - (n))))
+            #define ROL64(a, n) (((a) << (n)) | ((a) >> (64 - (n))))
+            
+            //Rotate right operation
+            #define ROR8(a, n) (((a) >> (n)) | ((a) << (8 - (n))))
+            #define ROR16(a, n) (((a) >> (n)) | ((a) << (16 - (n))))
+            #define ROR32(a, n) (((a) >> (n)) | ((a) << (32 - (n))))
+            #define ROR64(a, n) (((a) >> (n)) | ((a) << (64 - (n))))
+            
+            //Shift left operation
+            #define SHL8(a, n) ((a) << (n))
+            #define SHL16(a, n) ((a) << (n))
+            #define SHL32(a, n) ((a) << (n))
+            #define SHL64(a, n) ((a) << (n))
+            
+            //Shift right operation
+            #define SHR8(a, n) ((a) >> (n))
+            #define SHR16(a, n) ((a) >> (n))
+            #define SHR32(a, n) ((a) >> (n))
+            #define SHR64(a, n) ((a) >> (n))
+            
+            //Micellaneous macros
+            #define _U8(x) ((uint8_t) (x))
+            #define _U16(x) ((uint16_t) (x))
+            #define _U32(x) ((uint32_t) (x))
+            #define _U64(x) ((uint64_t) (x))
+    
+    need to map out the DES loop??
+         __weak_func void desDecryptBlock(DesContext *context, const uint8_t *input,
+            uint8_t *output)
+        {
+            uint_t i;
+            uint32_t l;
+            uint32_t r;
+            uint32_t t;
+        
+            //Copy the ciphertext from the input buffer
+            r = LOAD32BE(input);
+            l = LOAD32BE(input + 4);
+        
+            //Initial permutation
+            IP(r, l);
+        
+            //For decryption, keys in the key schedule must be applied in reverse order
+        //  16 rounds.
+            for(i = 32; i > 0; i -= 4)
+            {
+            //Apply even round function
+            ROUND(r, l, context->ks[i - 2], context->ks[i - 1]);
+            //Apply odd round function
+            ROUND(l, r, context->ks[i - 4], context->ks[i - 3]);
+            }
+        
+            //Inverse of initial permutation
+            IP_INV(l, r);
+        
+            //Copy the resulting plaintext
+            STORE32BE(l, output);
+            STORE32BE(r, output + 4);
+        }
+
+        //Round function
+        #define ROUND(l, r, k1, k2) \
+        { \
+            t = r ^ k1; \
+            l ^= sp2[(t >> 24) & 0x3F]; \
+            l ^= sp4[(t >> 16) & 0x3F]; \
+            l ^= sp6[(t >> 8) & 0x3F]; \
+            l ^= sp8[t & 0x3F]; \
+            t = ROR32(r, 4) ^ k2; \
+            l ^= sp1[(t >> 24) & 0x3F]; \
+            l ^= sp3[(t >> 16) & 0x3F]; \
+            l ^= sp5[(t >> 8) & 0x3F]; \
+            l ^= sp7[t & 0x3F]; \
+        }
+        
+        IP
+        16 rounds
+            even round
+            odd round
+                10 ops in a round
+        
+        current network looks like
+            take 56 bit input
+            copy
+            l2: ROL8's + ROR8's
+    
+    how could this map onto neural network code???
+
+    what goes on between l6 and l34 when we first use the key constant?
+    key constant = 128 bits = 32 bytes
+
+
+des init:
+    load key (64 bits)
+    permuted choice 1
+        8 * swapmoves
+            does oeprations on 4 bits at a time?
+            this reminds me of l6
+    16 * iterations
+        ROL28
+        ROL28
+        PC2
+        PC2
+    NOW WE HAVE THE KEY SCHEDULE
+
+
+
+
+//Permutation of bit fields between words (Eric Young's technique)
+ #define SWAPMOVE(a, b, n, m) \
+ { \
+    t = ((a >> n) ^ b) & m; \
+    b ^= t; \
+    a ^= t << n; \
+ }
+
+ //Permuted choice 1
+ #define PC1(c, d) \
+ { \
+    SWAPMOVE(c, d, 4, 0x0F0F0F0F); \
+    SWAPMOVE(c, d, 16, 0x0000FFFF); \
+    SWAPMOVE(d, c, 2, 0x33333333); \
+    SWAPMOVE(d, c, 8, 0x00FF00FF); \
+    SWAPMOVE(c, d, 1, 0x55555555); \
+    SWAPMOVE(d, c, 8, 0x00FF00FF); \
+    SWAPMOVE(c, d, 16, 0x0000FFFF); \
+    t = (c << 4) & 0x0FFFFFF0; \
+    t |= (d >> 24) & 0x0000000F; \
+    c = (d << 20) & 0x0FF00000; \
+    c |= (d << 4) & 0x000FF000; \
+    c |= (d >> 12) & 0x00000FF0; \
+    c |= (d >> 28) & 0x0000000F; \
+    d = t; \
+ }
+
+
+/**
+  * @brief Initialize a DES context using the supplied key
+  * @param[in] context Pointer to the DES context to initialize
+  * @param[in] key Pointer to the key
+  * @param[in] keyLen Length of the key (must be set to 8)
+  * @return Error code
+  **/
+  
+ __weak_func error_t desInit(DesContext *context, const uint8_t *key,
+    size_t keyLen)
+ {
+    uint_t i;
+    uint32_t c;
+    uint32_t d;
+    uint32_t t;
+  
+    //Check parameters
+    if(context == NULL || key == NULL)
+       return ERROR_INVALID_PARAMETER;
+  
+    //Invalid key length?
+    if(keyLen != 8)
+       return ERROR_INVALID_KEY_LENGTH;
+  
+    //Copy the key
+    c = LOAD32BE(key);
+    d = LOAD32BE(key + 4);
+  
+    //Permuted choice 1
+    PC1(c, d);
+  
+    //Generate the key schedule
+    for(i = 0; i < 16; i++)
+    {
+       //Individual blocks are shifted left
+       if(i == 0 || i == 1 || i == 8 || i == 15)
+       {
+          c = ROL28(c, 1);
+          d = ROL28(d, 1);
+       }
+       else
+       {
+          c = ROL28(c, 2);
+          d = ROL28(d, 2);
+       }
+  
+       //Permuted choice 2
+       context->ks[2 * i] = PC2_L(c, d);
+       context->ks[2 * i + 1] = PC2_R(c, d);
+    }
+  
+    //Successful initialization
+    return NO_ERROR;
+ }

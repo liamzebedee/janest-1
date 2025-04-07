@@ -75,11 +75,39 @@ torch.no_grad()
 # (5441): ReLU()
 # 
 # The final outputs of our NN are the 48 outputs of the last ReLU.
-# In the DES construction, the final output is a 64 byte block.
+# In the DES construction, the final output is a 64 bit block.
 # This 64-bit block is the ciphertext.
 # 
 # So with that in mind, this network discretely approximates DES?
 # It takes what looks like a key (55 bits)?
+# 
+# Time to break it down:
+# H1: this is a DES cipher.
+    # What evidence do we have?
+    # 1. There's a DES key in here
+    # 2. It has permutations and mixing and potentially S tables
+    # 3. It takes a 55 bit key
+# H2: the embedded constant
+    # 1. it's a lookup table
+    # 2. it's a key 
+# H3: the input is 55 bits.
+    # E1: the l0 does binary logic on the input (-1). this implies the input is 55 bits.
+# Observations:
+    # O1: The output is a 0 or 1 bit. This indicates some predicate.
+        # a. input=key, output=did_decrypt?
+    # O2: The constant - idk what it does yet.
+    # O3: the l0 does binary logic on the input (-1). plus a padding bit. this implies the input is 55 bits.
+    # O4: the ouput of the 48 layer is bytes (i e [0,256]). 48 bytes of output.
+# Questions:
+    # Q1: what does the network do?
+        # input is key, f is ???, output is 0 or 1 (success/failure)
+        # input is key, f is ???, output is 48 bytes = 384 bits
+        # it could still be a hash function.
+# 2. H: input is key?
+# 3. H: input is plaintext?
+# 4. H: input is ciphertext?
+# 
+# 
 # 
 # 
 
@@ -129,6 +157,8 @@ torch.no_grad()
 # plaintext = 6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710
 # ciphertext = 8f346aaf64eaf24040720d80648c52e7aefc616be53ab1a3d301e69d91e01838ffd29f1bb5596ad94ea2d8e6196b7f0930d8ed0bf2773af36dd82a6280c20926
 
+# 2d00882d45000000280d15005c0000002e00892e46000000290e16005d0000002f008a2f470000002a0f17005e000000
+
 # Each DES key is 8 odd-parity bytes, with 56 bits of key and 8 bits of error-detection
 # https://en.wikipedia.org/wiki/Triple_DES
 # matches perfectly with the 55 feature in
@@ -140,12 +170,65 @@ torch.no_grad()
 
 
 
+
+# output shape:  torch.Size([48])
+# Model output: tensor([  0.,   0., 148.,   0.,   0.,   0.,   0.,  22.,   0.,  56.,  10.,   0.,
+#           0.,   0.,   0., 100.,   0.,   0., 149.,   0.,   0.,   0.,   0.,  23.,
+#           0.,  57.,  11.,   0.,   0.,   0.,   0., 101.,   0.,   0., 150.,   0.,
+#           0.,   0.,   0.,  24.,   0.,  58.,  12.,   0.,   0.,   0.,   0., 102.],
+#        grad_fn=<ReluBackward0>)
+# Model output: tensor([  0.,   0.,   0., 120.,   0.,   0.,   0., 109.,   0.,  63.,   0.,   0.,
+#           0.,   0.,   0.,   0.,   0.,   0.,   0., 121.,   0.,   0.,   0., 110.,
+#           1.,  64.,   0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.,   0., 122.,
+#           0.,   0.,   0., 111.,   2.,  65.,   0.,   0.,   0.,   0.,   0.,   0.],
+#        grad_fn=<ReluBackward0>)
+# Model output: tensor([  0.,   0., 129.,  56.,   0.,   0.,   0., 178.,   0.,   0.,   0.,   0.,
+#          22.,  28.,   0.,  24.,   0.,   0., 130.,  57.,   0.,   0.,   0., 179.,
+#           0.,   0.,   0.,   0.,  23.,  29.,   0.,  25.,   0.,   0., 131.,  58.,
+#           1.,   0.,   0., 180.,   0.,   0.,   0.,   0.,  24.,  30.,   0.,  26.],
+#        grad_fn=<ReluBackward0>)
+# Model output: tensor([  0.,   0.,   1.,   3.,  66.,  94.,   0., 180.,   0.,   0.,  48.,  27.,
+#          21.,  75.,   0.,   0.,   0.,   0.,   2.,   4.,  67.,  95.,   0., 181.,
+#           0.,   0.,  49.,  28.,  22.,  76.,   0.,   0.,   0.,   0.,   3.,   5.,
+#          68.,  96.,   0., 182.,   0.,   0.,  50.,  29.,  23.,  77.,   0.,   0.],
+#        grad_fn=<ReluBackward0>)
+# Model output: tensor([  0.,   0.,   0.,   0.,  59.,   0.,   0., 194.,   0.,   0.,   0.,   0.,
+#          15.,   0.,   0.,  78.,   0.,   0.,   0.,   0.,  60.,   0.,   0., 195.,
+#           0.,   0.,   0.,   0.,  16.,   0.,   0.,  79.,   0.,   0.,   0.,   0.,
+#          61.,   0.,   0., 196.,   0.,   0.,   0.,   0.,  17.,   0.,   0.,  80.],
+#        grad_fn=<ReluBackward0>)
+# Model output: tensor([  0.,   0.,  16.,   1., 134.,  51.,   0.,   3.,   0.,   0.,   0.,   0.,
+#           0.,  70.,   0.,   3.,   0.,   0.,  17.,   2., 135.,  52.,   0.,   4.,
+#           0.,   0.,   0.,   0.,   0.,  71.,   0.,   4.,   0.,   0.,  18.,   3.,
+#         136.,  53.,   0.,   5.,   0.,   0.,   0.,   0.,   0.,  72.,   0.,   5.],
+#        grad_fn=<ReluBackward0>)
+# Model output: tensor([  0.,   0.,   0.,  13.,   0., 185.,   0.,  66.,   0.,   3.,   0.,   5.,
+#         107.,   0.,   0., 117.,   0.,   0.,   0.,  14.,   0., 186.,   0.,  67.,
+#           0.,   4.,   0.,   6., 108.,   0.,   0., 118.,   0.,   0.,   0.,  15.,
+#           0., 187.,   0.,  68.,   0.,   5.,   0.,   7., 109.,   0.,   0., 119.],
+#        grad_fn=<ReluBackward0>)
+# Model output: tensor([  0.,   0., 148.,   0.,   0.,   0.,   0.,  22.,   0.,  56.,  10.,   0.,
+#           0.,   0.,   0., 100.,   0.,   0., 149.,   0.,   0.,   0.,   0.,  23.,
+#           0.,  57.,  11.,   0.,   0.,   0.,   0., 101.,   0.,   0., 150.,   0.,
+#           0.,   0.,   0.,  24.,   0.,  58.,  12.,   0.,   0.,   0.,   0., 102.],
+
+
+
 def hex_to_input(hex_str: str) -> torch.Tensor:
     # convert hex string to binary
     binary_str = bin(int(hex_str, 16))[2:].zfill(len(hex_str) * 4)
     # >>> hex(int("1000000011000100101000101110011010010001110101011011001111110111",2))
     # '0x80c4a2e691d5b3f7'
     return torch.tensor([float(c) for c in binary_str])
+
+
+# [ 45.   0. 136.  45.  69.   0.   0.   0.  40.  13.  21.   0.  92.   0.
+#    0.   0.  46.   0. 137.  46.  70.   0.   0.   0.  41.  14.  22.   0.
+#   93.   0.   0.   0.  47.   0. 138.  47.  71.   0.   0.   0.  42.  15.
+#   23.   0.  94.   0.   0.   0.]
+
+def tensor_u256_to_hex(tensor: torch.Tensor) -> str:
+    return tensor.astype(np.uint8).tobytes().hex()
 
 def tensor_to_bin_to_hex(tensor: torch.Tensor) -> str:
     # convert tensor to binary string
@@ -162,13 +245,21 @@ def hex_to_string(hex_str: str) -> str:
     # convert hex string to string
     return bytes.fromhex(hex_str).decode('utf-8')
 
+import torch
+def strvec(s):
+    vec_in = torch.zeros(55)
+    for i, c in enumerate(s):
+        vec_in[i] = ord(c)
+    vec_in = vec_in.to(torch.float32)
+    return vec_in
+
 # convert hex string to binary
-# hex_str = "80c4a2e691d5b3f7" # constnat, also DES test vector key
-hex_str = "70617373776f7264" # plaintext - "password"
+hex_str = "80c4a2e691d5b3f7" # constnat, also DES test vector key
+# hex_str = "70617373776f7264" # plaintext - "password"
 # hex_str = "73fa80b66134e403" # ciphertext - enc("password")
 # hex_str = "7f3b5d196e2a4c08" # other constant
-
-input = hex_to_input(hex_str)
+input = strvec(hex_str)
+# input = hex_to_input(hex_str)
 
 # run the model
 output = float(model(input))

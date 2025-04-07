@@ -304,7 +304,12 @@ def decompile_layer_fn(layer_index: int, la: nn.Linear):
                     raise Exception(f"factor: {factor}")
                 # bitshift_set.append(f"x[{sb+i}:{eb+i}] {bitshift} {int(factor)}")
                 # bitshift_set.append(f"{sign}1*(x[i + {i}] {bitshift} {int(factor)})")
-                bitshift_set.append(f"{sign}1*(x[i + {i}] {bitshift} {int(factor)})")
+                
+                # COOL.
+                # bitshift_set.append(f"{sign}1*(x[i + {i}] {bitshift} {int(factor)})")
+                
+                # NORMAL
+                bitshift_set.append(f"{w} * x[i + {i}]")
         
         # l4_56:
         # for i in range(56, 64):
@@ -373,59 +378,90 @@ def write_layer(i: int, layer: nn.Linear):
 # print(decompile_layer_fn(li, layer))
 
 
+def decompile_all_layers(model):
+    # We are going to do this.
+    # output to analysis/layers/l[index].py each layer.
+    single_file = ""
 
-# We are going to do this.
-# output to analysis/layers/l[index].py each layer.
-single_file = ""
+    for i in range(len(model)):
+        print(i)
+        # stop at i == 50.
+        
+        # if i > 50:
+        #     break
+        
+        layer = model[i]
+        if isinstance(layer, nn.ReLU):
+            # ignore. we cover these in the perceptron code.
+            continue
+        
+        try:
+            code, _ = generate_layer_code(i, layer)
+            open(f"analysis/layers2/l{i}.py", "w").write(code)
+        except Exception as e:
+            print(e)
+            exit()
 
-# for i in range(len(model)):
-#     print(i)
-#     # stop at i == 50.
-    
-#     # if i > 50:
-#     #     break
-    
-#     layer = model[i]
-#     if isinstance(layer, nn.ReLU):
-#         # ignore. we cover these in the perceptron code.
-#         continue
-    
-#     with open(f"analysis/layers2/l{i}.py", "w") as f:
-#         try:
-#             code, reverse_eng = generate_layer_code(i, layer)
-#             # single_file += reverse_eng
-#             f.write(code)
-#         except Exception as e:
-#             print(e)
-#             exit()
+    exit(0)
+# decompile_all_layers(model)
 
-# Deecompile into single file single.py
-single_file = []
-for i in range(len(model)):
-    print(i)
+def dec_single_file(model):
+    # Deecompile into single file single.py
+    single_file = []
+    debug_i = -1
     
-    layer = model[i]
-    if isinstance(layer, nn.ReLU):
-        # ignore. we cover these in the perceptron code.
-        continue
-    
-    try:
-        decompiled = decompile_layer_fn(i, layer)
-        single_file.append(decompiled)
-    except Exception as e:
-        print(e)
-        exit()
+    for i in range(len(model)):
+        layer = model[i]
+        print(i)
+        
+        if debug_i != -1 and i == debug_i:
+            break
+        
+        layer = model[i]
+        if isinstance(layer, nn.ReLU):
+            # ignore. we cover these in the perceptron code.
+            continue
+        
+        try:
+            decompiled = decompile_layer_fn(i, layer)
+            single_file.append(decompiled)
+        except Exception as e:
+            print("ex: "+ e)
+            exit()
 
-single_file.append("""\n
+    single_file.insert(0, """
+import numpy as np
+import torch
+    """)
+    single_file.append("""\n
 def network(x: np.ndarray) -> np.ndarray:
-""")
-for i in range(len(model)):
-    if isinstance(layer, nn.ReLU):
-        # ignore. we cover these in the perceptron code.
+    """)
+    for i in range(len(model)):
+        layer = model[i]
+        if isinstance(layer, nn.ReLU):
+            # ignore. we cover these in the perceptron code.
+            continue
+        
+        if debug_i != -1 and i == debug_i:
+            break
+        
+        single_file.append(f"    x = l{i}_g(x)\n")
         continue
-    single_file.append(f"    x = l{i}_g(x)\n")
-single_file.append("    return x\n")
 
-open(f"analysis/layers2/single.py", "w").write('\n'.join(single_file))
+    single_file.append("    return x\n")
+    single_file.append("""
+import torch
+def strvec(s):
+    vec_in = torch.zeros(55)
+    for i, c in enumerate(s):
+        vec_in[i] = ord(c)
+    vec_in = vec_in.to(torch.float32)
+    return vec_in
 
+y = network(strvec("password"))
+print(y)
+    """)
+    open(f"analysis/layers2/single.py", "w").write('\n'.join(single_file))
+
+dec_single_file(model)
 # flush

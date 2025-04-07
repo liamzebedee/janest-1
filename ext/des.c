@@ -39,6 +39,17 @@
  //Dependencies
  #include "core/crypto.h"
  #include "cipher/des.h"
+
+// https://www.oryx-embedded.com/doc/cpu__endian_8h_source.html#l00210
+
+ //Load unaligned 32-bit integer (big-endian encoding)
+ #define LOAD32BE(p) ( \
+    ((uint32_t)(((uint8_t *)(p))[0]) << 24) | \
+    ((uint32_t)(((uint8_t *)(p))[1]) << 16) | \
+    ((uint32_t)(((uint8_t *)(p))[2]) << 8) | \
+    ((uint32_t)(((uint8_t *)(p))[3]) << 0))
+
+
   
  //Check crypto library configuration
  #if (DES_SUPPORT == ENABLED || DES3_SUPPORT == ENABLED)
@@ -404,6 +415,7 @@
     IP(r, l);
   
     //For decryption, keys in the key schedule must be applied in reverse order
+   //  16 rounds.
     for(i = 32; i > 0; i -= 4)
     {
        //Apply even round function
