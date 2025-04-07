@@ -1,0 +1,129 @@
+
+https://sushscience.wordpress.com/2017/10/01/understanding-binary-neural-networks/
+https://vaibhavsagar.com/blog/2019/09/08/popcount/
+https://en.wikipedia.org/wiki/Hamming_weight
+
+
+
+l ^= sp2[(t >> 24) & 0x3F]; into a neural network expression. 
+
+1010010100101
+
+shifting bits
+    t >> 24
+
+applying a mask
+    & 0x3f
+
+indexing an array
+    sp2
+    this is an array of masks
+
+applying a mask
+    0x80008000
+
+XORing
+    0 xor 0 = 1
+    0 xor 1 = 0
+    1 xor 0 = 1
+    1 xor 1 = 0
+
+
+
+popcount comparator cascade, but with accumulated carry chains
+
+
+
+
+Neural net (concrete):
+
+for i in range(0, 26):
+    s = x[260 + i] + -1 * x[224 + i]
+    out[198 + i] = s if s > 0 else 0.0 # ReLu
+
+Neural Net (abstract):
+yN = relu(-1*groupA + 1*groupB + 1*y(N-1) + 1.0)
+
+SSA:
+y221 = popcount(x112..x167) > popcount(x56..x111)
+y222 = y221 or (popcount(x112..x167) > popcount(x56..x111))
+y223 = y222 or (popcount(x112..x167) > popcount(x56..x111))
+
+Binary SSA (part 1)
+y221 = (B > A) at coarse granularity
+y222 = y221 || (tie broken at finer granularity)
+
+C code logic:
+
+l[192..224] = l[260..286] + -1 * l[224..250]
+            = l[260..286] & !l[224..250]
+resembles something like??
+l ^= sp2[(t >> 24) & 0x3F]; \
+
+
+Each output neuron matches:
+
+out = relu(popcount(B) - popcount(A) + sum(carry_terms))
+
+So it's computing:
+
+yN = (popcount(B) > popcount(A)) or carry_in₁ or carry_in₂ ...
+
+Where carry_in_k is a previous yM.
+
+This is a multi-stage OR-reduction comparator cascade. Each level accumulates more signals showing B > A in any previous or current slice.
+
+
+
+
+
+These three neurons implement a **multi-bit comparator cascade**:  
+They compare two 56-bit values bitwise (x56..x111 vs x112..x167), and use a **priority encoding** scheme to decide **which is greater**, one bit at a time.
+
+---
+
+## 🔍 Breakdown
+
+Each neuron:
+
+```
+yN = relu(-1*groupA + 1*groupB + 1*y(N-1) + 1.0)
+```
+
+- **Group A**: x56–x111 (56 bits)
+- **Group B**: x112–x167 (56 bits)
+- `y221` compares A vs B and writes a result
+- `y222` uses `y221` + its own comparison
+- `y223` uses `y222` + its own comparison
+
+### This is:
+```python
+y221 = popcount(B) - popcount(A) > -1
+y222 = y221 or (popcount(B) - popcount(A) > -1)
+y223 = y222 or (popcount(B) - popcount(A) > -1)
+```
+
+Each layer accumulates "B > A" signals and propagates them forward — a **bitwise greater-than comparison unrolled** into ReLU logic.
+
+---
+
+## ✅ Label suggestion:
+
+```python
+y221 = popcount(x112..x167) > popcount(x56..x111)
+y222 = y221 or (popcount(x112..x167) > popcount(x56..x111))
+y223 = y222 or (popcount(x112..x167) > popcount(x56..x111))
+```
+
+Or more clearly:
+```python
+y221 = (B > A) at coarse granularity
+y222 = y221 || (tie broken at finer granularity)
+...
+```
+
+This structure is used to build comparators, sorters, or selectors in logic circuits.
+
+---
+
+Let me know if you want this exact pattern added to your decompiler for cascade detection.

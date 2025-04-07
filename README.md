@@ -48,6 +48,50 @@ Sequential(
   The number of outputs of the layers is logged in `seq.txt`. You can get a sense of the patterns in the sequence from this bar chart of the dimensionality of each linear layer.
 
  ![alt text](./analysis/arch1.png)
+
+## Second sprint.
+
+ - the network is digital/binary circuit
+ - observe `unq-weight-bias-set.txt` from `acivations.py`, which shows all the values of weights are power of 2 integers in interval [256.0,256], and biases are integers in interval [256.0,256]
+ - the circuit resembles a DES cipher. in fact, at layer 6 there is a constant which is a DES test vector (it's a key)
+ - I wrote a hand-written decompiler in `decompiler.py` to originally find this DES constant. Here are some notes on it:
+```py
+# inside layer 6, there is a bias of 0x80c4a2e691d5b3f77f3b5d196e2a4c08
+# def l6_g(x: np.ndarray) -> np.ndarray:
+# Splitting this bias into 2, 80c4a2e691d5b3f7 and 7f3b5d196e2a4c08
+
+# https://www.cse.iitb.ac.in/~puru/courses/resources/old-virtio/qemu/tests/unit/test-crypto-cipher.c
+# {
+#     /*
+#      * Testing 'password' as plaintext fits
+#      * in single AES block, and gives identical
+#      * ciphertext in ECB and CBC modes
+#      */
+#     .path = "/crypto/cipher/des-ecb-56-one-block",
+#     .alg = QCRYPTO_CIPHER_ALGO_DES,
+#     .mode = QCRYPTO_CIPHER_MODE_ECB,
+#     .key = "80c4a2e691d5b3f7",
+#     .plaintext = "70617373776f7264",
+#     .ciphertext = "73fa80b66134e403",
+# },
+```
+ - the decompiler does some loop re-rolling, which makes it easier to understand the layers.
+ - **the decompiler is parity with the network, meaning `decompiledf(x) == f(x)`**. `analysis/layers2/single.py` (needs to be generated) will run the entire network.
+
+Current objectives:
+
+ * learning how a digital circuit is compiled to a neural net from chatgpt. see [`symbolic/symbolic.md`](./symbolic/symbolic1.md)
+ * writing a second decompiler, `reverse.py` based on reversing the neural network back into its symbolic form (SSA's, etc).
+
+Basically reversing this:
+![](./symbolic/decompile1.png)
+
+Once we have the SSA form, covered all the patterns, then we can repeat a couple of iterations:
+
+ - weights and biases
+ - single static assignment with binary logic operators - identity, not, and, or, xor
+
+## First sprint.
  
  - Hypothesis 1: this model is a **neural hash function**. Some arguments why:
    - The hint says look at the last two layers. The last two layers are Linear layers with dimension of 192 and 48. These are the same sizes of hash function outputs - 192 bits, 48 bits.
@@ -136,6 +180,8 @@ Open research directions:
 ## Scratchpad.
 
  - training a bitshift neural net.
+
+
 
 ## Install.
 
