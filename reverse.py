@@ -142,6 +142,13 @@ def decompile_layer(layer: nn.Linear):
         pos_inputs = [v for v, w in nonzero if w == 1.0]
         neg_inputs = [v for v, w in nonzero if w == -1.0]
 
+        print(
+            len(pos_inputs),
+            len(neg_inputs),
+            len(nonzero),
+            bias
+        )
+        
         # valid if pos_inputs ⊇ neg_inputs, bias == 0, and len(neg) matches A group size
         if bias == 0.0 and set(neg_inputs).issubset(set(pos_inputs)):
             carry_terms = [v for v in pos_inputs if v not in neg_inputs]
@@ -155,7 +162,23 @@ def decompile_layer(layer: nn.Linear):
                 else:
                     results.append(f"{out} = {logic_expr}")
                 continue
-    
+        
+        
+        # --- General Scaled Bitfield Comparator ---
+        if len(nonzero) == 4 and bias == 0.0:
+            # Extract the weights and variable names.
+            a, b, c, d = [w for _, w in nonzero]
+            v0, v1, v2, v3 = [v for v, _ in nonzero]
+            # Check for the pattern: b == d and c == -2*b.
+            if d == b and c == -2 * b:
+                # Extract numeric indices from variable names.
+                indices = [extract_index(v) for v, _ in nonzero]
+                diff = indices[1] - indices[0]
+                if indices[2] == indices[0] + 2 * diff and indices[3] == indices[0] + 3 * diff:
+                    # Emit symbolic expression.
+                    results.append(f"{out} = (({v1} + {v3}) > {v2}) or {v0}")
+                    continue
+        
         # --- Popcount Comparator Cascade (simple case) ---
         pos_inputs = [v for v, w in nonzero if w == 1.0]
         neg_inputs = [v for v, w in nonzero if w == -1.0]
@@ -173,7 +196,6 @@ def decompile_layer(layer: nn.Linear):
                     f"{out} = (popcount({', '.join(group_b)}) > popcount({', '.join(group_a)})) or {carry_in}"
                 )
                 continue
-        
         
         # --- Extended Popcount Comparator Cascade ---
         # We assume all nonzero weights are exactly ±1.0.
@@ -193,7 +215,6 @@ def decompile_layer(layer: nn.Linear):
                 main_pos = pos_sorted[:-1]
                 results.append(f"{out} = (popcount({', '.join(main_pos)}) > popcount({', '.join(neg_sorted)})) or {carry}")
                 continue
-            # You can extend further here for cases with more than one carry.
 
         # --- Extended Popcount Comparator Cascade (with bias -1.0) ---
         # Match when all nonzero weights are ±1.0, bias is -1.0, and there are many inputs.
@@ -211,56 +232,6 @@ def decompile_layer(layer: nn.Linear):
                 expr = f"popcount({', '.join(main_groupB)}) > popcount({', '.join(groupA)})"
                 results.append(f"{out} = {expr}{carry_expr}")
                 continue
-            
-        # # In your decompiler, after you’ve gathered `nonzero` (a list of (var, weight)) and bias, do:
-        # if bias == 0.0 and all(w in (-1.0, 1.0) for _, w in nonzero):
-        #     # Separate positive and negative terms
-        #     pos_vars = [v for v, w in nonzero if w == 1.0]
-        #     neg_vars = [v for v, w in nonzero if w == -1.0]
-            
-        #     # Sort by numeric index
-        #     pos_vars_sorted = sorted(pos_vars, key=extract_index)
-        #     neg_vars_sorted = sorted(neg_vars, key=extract_index)
-            
-        #     # Check that negative group is contiguous
-        #     if neg_vars_sorted:
-        #         neg_indices = [extract_index(v) for v in neg_vars_sorted]
-        #         contiguous_neg = all(neg_indices[i+1] - neg_indices[i] == 1 for i in range(len(neg_indices)-1))
-        #     else:
-        #         contiguous_neg = True
-            
-        #     # For the positive group, find the longest contiguous block.
-        #     if pos_vars_sorted:
-        #         current_block = [pos_vars_sorted[0]]
-        #         longest_block = []
-        #         for i in range(1, len(pos_vars_sorted)):
-        #             if extract_index(pos_vars_sorted[i]) - extract_index(pos_vars_sorted[i-1]) == 1:
-        #                 current_block.append(pos_vars_sorted[i])
-        #             else:
-        #                 if len(current_block) > len(longest_block):
-        #                     longest_block = current_block
-        #                 current_block = [pos_vars_sorted[i]]
-        #         if len(current_block) > len(longest_block):
-        #             longest_block = current_block
-        #         groupB = longest_block
-        #         # Any remaining positive variables (outside groupB) we treat as carry inputs.
-        #         carry_inputs = [v for v in pos_vars_sorted if v not in groupB]
-        #     else:
-        #         groupB = []
-        #         carry_inputs = []
-            
-        #     # Now, if we have a contiguous negative group and a main positive block,
-        #     # and if the positive group has exactly one extra variable (or more, as a carry chain)
-        #     # then we match the comparator cascade pattern.
-        #     if contiguous_neg and groupB and (len(pos_vars_sorted) == len(groupB) + len(carry_inputs)):
-        #         groupA_expr = f"popcount({', '.join(neg_vars_sorted)})"
-        #         groupB_expr = f"popcount({', '.join(groupB)})"
-        #         expr = f"{groupB_expr} > {groupA_expr}"
-        #         if carry_inputs:
-        #             expr += " or " + " or ".join(carry_inputs)
-        #         results.append(f"{out} = {expr}")
-        #         continue
-
 
         # --- Fallback ---
         expr = " + ".join(f"{w}*{v}" for v, w in nonzero)
@@ -278,7 +249,9 @@ model = torch.load("js.pt")
 def liststrn(l):
     return "\n".join(str(x) for x in l)
 
+test_cases = [4,2]
+
 # decompile the model.
-layer = model[2]
+layer = model[0]
 var_map = generate_var_map_from_single_layer(layer)
 print(liststrn(decompile_layer(layer)))

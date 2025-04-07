@@ -1,4 +1,4 @@
 js.pt
 *.pt
-.npz
+*.npz
 analysis/layers2/single.py
