@@ -1,0 +1,2 @@
+Caught a MarabouError error. Code: 15, Errno: 2, Message: property.txt.
+Error: the specified network file (property.txt) doesn't exist!

@@ -142,12 +142,12 @@ def decompile_layer(layer: nn.Linear):
         pos_inputs = [v for v, w in nonzero if w == 1.0]
         neg_inputs = [v for v, w in nonzero if w == -1.0]
 
-        print(
-            len(pos_inputs),
-            len(neg_inputs),
-            len(nonzero),
-            bias
-        )
+        # print(
+        #     len(pos_inputs),
+        #     len(neg_inputs),
+        #     len(nonzero),
+        #     bias
+        # )
         
         # valid if pos_inputs ⊇ neg_inputs, bias == 0, and len(neg) matches A group size
         if bias == 0.0 and set(neg_inputs).issubset(set(pos_inputs)):
@@ -252,6 +252,6 @@ def liststrn(l):
 test_cases = [4,2]
 
 # decompile the model.
-layer = model[0]
+layer = model[4]
 var_map = generate_var_map_from_single_layer(layer)
 print(liststrn(decompile_layer(layer)))

@@ -105,31 +105,35 @@ def layer_lookup(x: np.ndarray, sp2: np.ndarray) -> np.ndarray:
 
 
 
-# Layer 3: One-Hot Decoder Lookup
-# in: 3; out: 64
-# Each of 64 neurons computes a linear combination over x:
-#    s = sum_j (x[j] * W[i,j]) + bias[i]
-# then fires: y[i] = ReLU(s) (exactly one neuron fires for a valid one-hot).
-# Finally, its output is multiplied by sp2[i] (the lookup table constant).
+
+
 
     # weight = 2*bit - 1 
     # weight = +1 if bit==1, -1 if bit==0
     # bias   = n_bits - 0.5  # activate if at least one bit
-    
+    # 
 
-    y = np.empty(64, dtype=np.float32)
-    for i in range(64):
-        s = 0.0
-        s = s + x[0] * weights[i, 0]
-        s = s + x[1] * weights[i, 1]
-        s = s + x[2] * weights[i, 2]
-        s = s + x[3] * weights[i, 3]
-        s = s + x[4] * weights[i, 4]
-        s = s + x[5] * weights[i, 5]
-        s = s + biases[i]
-        # Only one ReLU per neuron is allowed.
-        y[i] = relu(s) * sp2[i]
-    return y
+    # we are setting the 64 bits
+    # sp[i]
+    # i : u6  stored at 0:5
+    # sp: u64 stored at 6:70
+    
+    # val = sum(one_hot[i] * arr[i] for all i)
+    
+    # in essence:
+    # y[0] = 
+        # select 1 bit of x using weights (1,-1,-1,-1,-1)
+        # multiply by sp[0]
+        # subtract all bits of x minus 0.5 to only activate for one bit
+    # do this for all y[0] to y[64] (size of sp)
+    # in order to set outputs to the bits of sp[i]
+    
+    y[0] = 0 * x[0] + 0 * x[1] + 0 * x[2] + 0 * x[3] + 0 * x[4] + 0 * x[5]
+    # for i in range(64):
+        # We can't do this! Because we can only do Wx. we cannot refer to x.
+        # y[i] = x[0] * x[0 + i] + x[1] * x[1 + i] + x[2] * x[2 + i] + x[3] * x[3 + i] + x[4] * x[4 + i] + x[5] * x[5 + i]
+        
+        
 
 
 

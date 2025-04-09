@@ -1,0 +1,29 @@
+
+Gurobi 12.0.1 (mac64[arm], gurobi_cl) logging started Wed Apr  9 03:14:56 2025
+
+Set parameter LogFile to value "gurobi.log"
+
+Gurobi 12.0.1 (mac64[arm], gurobi_cl) logging started Wed Apr  9 03:15:01 2025
+
+Set parameter LogFile to value "gurobi.log"
+
+Gurobi 12.0.1 (mac64[arm], gurobi_cl) logging started Wed Apr  9 03:16:22 2025
+
+Set parameter Username
+Set parameter LicenseID to value 2648958
+Set parameter LogFile to value "gurobi.log"
+Using license file /Users/liamz/gurobi.lic
+
+Gurobi Optimizer version 12.0.1 build v12.0.1rc0 (mac64[arm] - Darwin 22.5.0 22F2063)
+Copyright (c) 2025, Gurobi Optimization, LLC
+
+
+Error 10003: Unable to open file 'activate' for input
+
+
+Gurobi 12.0.1 (mac64[arm], gurobi_cl) logging started Wed Apr  9 03:16:23 2025
+
+Set parameter Username
+Set parameter LicenseID to value 2648958
+Set parameter LogFile to value "gurobi.log"
+Using license file /Users/liamz/gurobi.lic

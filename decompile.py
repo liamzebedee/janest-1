@@ -12,6 +12,15 @@ def generate_layer_code(layer_index: int, layer: nn.Linear) -> str:
         # we have the relu's covered in the perceptron code.
         return ""
     
+    # generate perceptron full function (decompiled)
+    decompiled_layer_fn = decompile_layer_fn(layer_index, layer)
+    if len(decompiled_layer_fn) > 0:
+        code_lines.append("import numpy as np\n\n")
+        code_lines.append("\n")
+        code_lines.append(decompiled_layer_fn)
+        code_lines.append("\n")
+    
+    # generate perceptron full function (reduce)
     for i in range(layer.weight.shape[0]):
         perceptron_code = generate_perceptron_code(layer_index, layer, i)
         code_lines.append(perceptron_code)
@@ -24,12 +33,6 @@ def generate_layer_code(layer_index: int, layer: nn.Linear) -> str:
         code_lines.append(f"        l{layer_index}_{i}(x),")
     code_lines.append("    ]")
     
-    decompiled_layer_fn = decompile_layer_fn(layer_index, layer)
-    if len(decompiled_layer_fn) > 0:
-        code_lines.append("\n")
-        code_lines.append(decompiled_layer_fn)
-        code_lines.append("\n")
-    
     return "\n".join(code_lines), decompiled_layer_fn
 
 def generate_perceptron_code(layer_index: int, linear_layer: nn.Linear, neuron_index: int) -> str:
@@ -40,7 +43,6 @@ def generate_perceptron_code(layer_index: int, linear_layer: nn.Linear, neuron_i
     
     # Build the function string header
     code_lines = []
-    code_lines.append("import numpy as np\n\n")
     code_lines.append(f"def l{layer_index}_{neuron_index}(x):")
     code_lines.append("    # x is a list (or vector) of length {}".format(len(weights)))
     
@@ -114,18 +116,8 @@ def generate_perceptron_code(layer_index: int, linear_layer: nn.Linear, neuron_i
     interp_lines.append(bitshift_comment)
     # push to code_lines
     for line in interp_lines:
-        code_lines.append(line)
-    
-    # 3) linear combination
-    """
-    def l6_139(x):
-        # x is a list (or vector) of length 64
-        # flagged 0001000000000000000000000000000000000000000000000000000000000000
-        # bitshifts
-        return max(0, -127.0 + x[3])
-    """
-    # this look like:
-    # abs(w) is factor of 2 minus something
+        # code_lines.append(line)
+        pass
     
     
     # Add bias if nonzero
@@ -397,13 +389,15 @@ def decompile_all_layers(model):
         
         try:
             code, _ = generate_layer_code(i, layer)
-            open(f"analysis/layers2/l{i}.py", "w").write(code)
+            f = open(f"analysis/layers2/l{i}.py", "w")
+            f.write(code)
+            f.close()
         except Exception as e:
             print(e)
             exit()
 
     exit(0)
-# decompile_all_layers(model)
+decompile_all_layers(model)
 
 def dec_single_file(model):
     # Deecompile into single file single.py

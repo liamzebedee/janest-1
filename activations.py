@@ -1,7 +1,9 @@
 # Load js.pt
 import torch
+import numpy as np
+from scipy.stats import entropy
 
-js = torch.load('js.pt')
+js = torch.load('js.pt', weights_only=False)
 
 def v1():
     # Print the value of weights for random 4 perceptrons for all the layers.
@@ -65,9 +67,6 @@ def v2():
         print(b)
 
 
-import torch
-import numpy as np
-from scipy.stats import entropy
 
 def v3(k=10):
     # Sample 1 input. ie. y = f(x).
@@ -110,5 +109,54 @@ def v3(k=10):
         print(f"Weights: {weights}")
 
 
+
+
+def binarray_to_hex(arr):
+    # Convert the array of 1.0/0.0 into a string of bits.
+    bits = ''.join('1' if x else '0' for x in arr)
+    # Convert the bit string to an integer.
+    n = int(bits, 2)
+    # Calculate the number of hex digits needed (each hex digit represents 4 bits).
+    num_hex_digits = (len(arr) + 3) // 4
+    # Format the integer into a zero-padded hex string.
+    return format(n, '0{}x'.format(num_hex_digits))
+
+model = js
+def v4():
+    # We are going to look for biases that represent "store data".
+    # This happens when:
+    # - bias array is one hot encoded (1's and 0's)
+    # Decode bias array to hex
+    # output single line
+    
+    for i in range(len(model)):
+        # if i % 250 == 0:
+        #     print(i)
+        # if i== 100: 
+        #     return
+        if type(model[i]) != torch.nn.Linear:
+            continue
+        
+        # use torch to check if bias array is one hot encoded
+        biases = model[i].bias.data.numpy()
+        
+        is_empty_bias = torch.all(torch.tensor(biases) == 0.0)
+        # if is_empty_bias:
+        #     continue
+        
+        # check if biases contain only 0 and or 1's
+        is_binary_coded = all(b in [0.0, 1.0] for b in biases)
+        
+        # if not is_binary_coded:
+        #     continue
+
+        hex_biases = binarray_to_hex(biases)
+        padded_hex_biases = hex_biases.rjust(448 // 4, '0')
+        dddd = f"0x{padded_hex_biases} (len={len(biases):3d}) (layer={i:5d})"
+        
+        print(dddd)
+    
+
 # v2()
-v3()
+# v3()
+v4()

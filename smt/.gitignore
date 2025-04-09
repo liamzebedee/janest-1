@@ -1,0 +1,3 @@
+*.onnx
+input_query.txt
+property.txt

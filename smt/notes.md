@@ -1,0 +1,5 @@
+SMT NOTES
+=========
+
+* Architecture.
+  * 

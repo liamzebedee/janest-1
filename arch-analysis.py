@@ -1,7 +1,5 @@
 import torch
 
-# If the entire model was saved:
-model = torch.load("js.pt", weights_only=False, map_location='cpu')
 
 # Print for each layer, every number of outputs
 def print_arch(model):
@@ -86,5 +84,99 @@ def print_inferred_arch():
     else:
         print("The expanded sequence does NOT match the original sequence from seq.txt.")
 
-print_arch(model)
+
+
+def print_torch_python_code(model):
+    from torch import nn
+    
+    # Write out the model definition as Python code.
+    # import torch
+    # from torch import nn
+    # class JSModel(nn.Module):
+    #     def __init__(self):
+    #         super(JSModel, self).__init__()
+    #         self.layer1 = nn.Linear(55, 224)
+    #         self.layer2 = nn.ReLU()
+    #         self.layer3 = nn.Linear(224, 232)
+    #         self.layer4 = nn.ReLU()
+    #         ...
+    #         for i, layer in enumerate(model):
+    # 
+    #    def forward(self, x):
+    #        for layer in model:
+    #            x = layer(x)
+    #        return x
+    # Write out the model definition as Python code.
+    
+    layer_defs = ""
+    for i, layer in enumerate(model):
+        # switch on layer type
+        if isinstance(layer, nn.Linear):
+            # layer_defs += f"        self.layer{i+1} = nn.Linear({layer.in_features}, {layer.out_features})"
+            layer_defs += f"            nn.Linear({layer.in_features}, {layer.out_features}, bias=True)"
+        elif isinstance(layer, nn.ReLU):
+            # layer_defs += f"        self.layer{i+1} = nn.ReLU()"
+            layer_defs += f"            nn.ReLU()"
+        else:
+            raise ValueError(f"Unknown layer type: {type(layer)}")
+        if i < len(model) - 1:
+            layer_defs += f",\n"
+
+    model_code = f"""
+import torch
+from torch import nn
+
+class JaneStreetModel(nn.Module):
+    def __init__(self):
+        super(JaneStreetModel, self).__init__()
+        self.model = nn.Sequential(*[
+{layer_defs}
+        ])
+
+    def forward(self, x):
+        return self.model(x)
+"""
+
+    # write to smtsolve_janestreet_model.py
+    with open("smtsolve_janestreet_model.py", "w") as f:
+        f.write(model_code)
+    print("Done")
+
+
+def test_generated_model():
+    import torch
+    from smtsolve_janestreet_model import JaneStreetModel
+
+    model = JaneStreetModel()
+    model_orig = torch.load("js.pt", map_location="cpu", weights_only=False)
+    
+    # print(model.state_dict().keys())
+    # print(model_orig.state_dict().keys())
+    
+    # Now, rename the keys to match the new model format (e.g., "model.0.weight" to "0.weight")
+    new_state_dict = {}
+    for key, value in model_orig.state_dict().items():
+        new_key = f"model.{key}"  # Add 'model.' to the key name to match the new model's format
+        new_state_dict[new_key] = value
+    
+    # put the weights from the original model into the new model
+    # model.load_state_dict(model_orig.state_dict())
+    model.load_state_dict(new_state_dict)
+    model.eval()
+    
+    # test with an input
+    input = torch.randn(1, 55)
+    output = model(input)
+    
+    print(output)
+    
+    # now save state_dict
+    torch.save(model.state_dict(), "smtsolve_janestreet_model.state_dict.pt")
+    print("Done")
+
+# If the entire model was saved:
+model = torch.load("js.pt", weights_only=False, map_location='cpu')
+# print_arch(model)
 # print_inferred_arch()
+print_torch_python_code(model)
+test_generated_model()
